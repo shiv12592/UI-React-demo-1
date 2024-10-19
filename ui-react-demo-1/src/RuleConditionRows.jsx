@@ -198,7 +198,7 @@ const RuleConditionRows = ({ onData }) => {
         setConditions(updatedConditions);
     };
 
-    const handleDepartmentSuggestionClick = (department, index, innerIndex) => {
+    const handleDepartmentSuggestionClick = (department, index, innerIndex, isRemove = false) => {
         const updatedConditions = [...conditions];
 
         console.log('Index:', index);
@@ -206,12 +206,17 @@ const RuleConditionRows = ({ onData }) => {
 
         // If no innerIndex, handle it as a level 1 selection
         if (innerIndex === undefined) {
-            const departmentValue = updatedConditions[index].identityValue || [];
+            let departmentValue = updatedConditions[index].identityValue || [];
 
             const existsIndex = departmentValue.findIndex(d => d.id === department.id);
             if (existsIndex !== -1) {
-                // Remove department if already exists
-                departmentValue.splice(existsIndex, 1);
+                if (isRemove) {
+                    // Remove the department if exists and the remove action is triggered
+                    departmentValue = departmentValue.filter(d => d.id !== department.id);
+                } else {
+                    // Override the department if it already exists
+                    departmentValue[existsIndex] = department;
+                }
             } else {
                 // Add department if not exists
                 departmentValue.push(department);
@@ -227,11 +232,16 @@ const RuleConditionRows = ({ onData }) => {
                 return;
             }
 
-            const departmentValue = updatedConditions[index].rows[innerIndex].identityValue || [];
+            let departmentValue = updatedConditions[index].rows[innerIndex].identityValue || [];
             const existsIndex = departmentValue.findIndex(d => d.id === department.id);
             if (existsIndex !== -1) {
-                // Remove department if already exists
-                departmentValue.splice(existsIndex, 1);
+                if (isRemove) {
+                    // Remove the department if exists and the remove action is triggered
+                    departmentValue = departmentValue.filter(d => d.id !== department.id);
+                } else {
+                    // Override the department if it already exists
+                    departmentValue[existsIndex] = department;
+                }
             } else {
                 // Add department if not exists
                 departmentValue.push(department);
@@ -242,24 +252,6 @@ const RuleConditionRows = ({ onData }) => {
         }
 
         // Set updated conditions
-        setConditions(updatedConditions);
-    };
-
-    const handleRemoveDepartment = (department, outerIndex, innerIndex) => {
-        const updatedConditions = [...conditions];
-
-        if (innerIndex === undefined) {
-            // Handle removal at level 1
-            const departmentValue = updatedConditions[outerIndex].identityValue || [];
-            const updatedDepartments = departmentValue.filter(dep => dep.id !== department.id);
-            updatedConditions[outerIndex].identityValue = updatedDepartments;
-        } else {
-            // Handle removal at level 2
-            const departmentValue = updatedConditions[outerIndex].rows[innerIndex].identityValue || [];
-            const updatedDepartments = departmentValue.filter(dep => dep.id !== department.id);
-            updatedConditions[outerIndex].rows[innerIndex].identityValue = updatedDepartments;
-        }
-
         setConditions(updatedConditions);
     };
 
@@ -404,7 +396,7 @@ const RuleConditionRows = ({ onData }) => {
                             <DepartmentSearch
                                 handleDepartmentSuggestionClick={(department) => handleDepartmentSuggestionClick(department, outerIndex, innerIndex)}
                                 selectedDepartments={condition.identityValue || []}
-                                onRemoveDepartment={(department) => handleRemoveDepartment(department, outerIndex, innerIndex)}
+                                onRemoveDepartment={(department) => handleDepartmentSuggestionClick(department, outerIndex, innerIndex, true)} // Pass the flag for removal
                                 disabled={isDisabled(level)}
                             />
                         ) : (

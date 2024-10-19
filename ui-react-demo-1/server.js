@@ -1,58 +1,43 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
-const PORT = 5000;
+const PORT = 5005;
 
-// MongoDB Connection
-const dbName = 'ruleDB'; // Ensure consistent naming here
-mongoose.connect(`mongodb://localhost:27017/${dbName}`)
-    .then(() => {
-        console.log('Connected to Database');
-    })
-    .catch(err => {
-        console.error('Database connection error:', err);
-    });
+// Example departments data
+const departments = [
+    { id: 1, name: 'HR' },
+    { id: 2, name: 'Engineering' },
+    { id: 3, name: 'Marketing' },
+    { id: 4, name: 'HR-manager' },
+    { id: 5, name: 'Engineering-manager' },
+    { id: 6, name: 'Marketing-manager' },
+];
 
-// Define Mongoose Schemas and Models
-const departmentSchema = new mongoose.Schema({
-    name: String
-});
+// Example ruleDetails data
+const ruleDetails = {
+    category: 'Default Category',
+    carId: '1234',
+    owner: 'Owner Name',
+    startTime: Math.floor(new Date('2023-01-01').getTime() / 1000), // Epoch timestamp for start date
+    endTime: Math.floor(new Date('2023-12-31').getTime() / 1000),   // Epoch timestamp for end date
+    requestData: ['Request1', 'Request2'],  // Example request data
+};
 
-const ruleDetailsSchema = new mongoose.Schema({
-    category: String,
-    carId: String,
-    owner: String,
-    startTime: Number,
-    endTime: Number,
-    requestData: [String]
-});
-
-const Department = mongoose.model('Department', departmentSchema);
-const RuleDetails = mongoose.model('RuleDetails', ruleDetailsSchema);
-
-// Enable CORS
+// Enable CORS if you're accessing this from another domain
 app.use(cors());
-app.use(express.json()); // To parse JSON request bodies
 
-// Route to get all departments
-app.get('/departments', async (req, res) => {
-    try {
-        const departments = await Department.find();
-        res.json(departments);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+// Route to get departments based on search query
+app.get('/departments', (req, res) => {
+    const search = req.query.search ? req.query.search.toLowerCase() : '';
+    const results = departments.filter(department =>
+        department.name.toLowerCase().includes(search)
+    );
+    res.json(results);
 });
 
 // Route to get ruleDetails
-app.get('/ruleDetails', async (req, res) => {
-    try {
-        const ruleDetails = await RuleDetails.find();
-        res.json(ruleDetails);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+app.get('/ruleDetails', (req, res) => {
+    res.json(ruleDetails);
 });
 
 // Start the server

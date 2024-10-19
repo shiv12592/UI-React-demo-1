@@ -11,7 +11,7 @@ export default function App() {
 
     // Fetch ruleDetails from the backend
     useEffect(() => {
-        fetch('http://localhost:5000/ruleDetails')  // Make a GET request to your server
+        fetch('http://localhost:5005/ruleDetails')  // Make a GET request to your server
             .then((response) => response.json())
             .then((data) => setRuleDetails(data))    // Store the fetched data in state
             .catch((error) => console.error('Error fetching rule details:', error));
@@ -66,13 +66,11 @@ export default function App() {
 
     return (
         <div className="container my-4" style={{ border: '1px solid black', padding: '20px' }}>
-            <div>RuleName</div>
-            <div>Rule No</div>
             <div className="mb-4" style={{ border: '1px solid black', padding: '20px' }}>
                 <RuleConditionRows onData={handleConditionData} />
             </div>
 
-            {/* Only render the DatePicker if ruleDetails has been fetched */}
+            {/* Only render the DatePicker if ruleDetails has been fetched*/}
             {/*{ruleDetails && <DatePicker ruleDetails={ruleDetails} />}*/}
 
             <div className="mb-4" style={{ border: '1px solid black', padding: '10px', textAlign: 'center' }}>
