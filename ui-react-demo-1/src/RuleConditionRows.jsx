@@ -1,5 +1,6 @@
 import React, {useState, useEffect, useRef} from "react";
 import DepartmentSearch from "./DepartmentSearch";
+import MultiDepartmentSearch from "./MultiDepartmentSearch";
 
 const RuleConditionRows = ({ onData }) => {
     const [conditions, setConditions] = useState([]);
@@ -198,60 +199,93 @@ const RuleConditionRows = ({ onData }) => {
         setConditions(updatedConditions);
     };
 
+    // const handleDepartmentSuggestionClick = (departmentName, index, innerIndex, isRemove = false) => {
+    //     const updatedConditions = [...conditions];
+    //
+    //     // If no innerIndex, handle it as a level 1 selection
+    //     if (innerIndex === undefined) {
+    //         let departmentValue = updatedConditions[index].identityValue || [];
+    //
+    //         if (isRemove) {
+    //             // Remove the department if exists and the remove action is triggered
+    //             departmentValue = departmentValue.filter(d => d !== departmentName); // Filter by department name
+    //         } else {
+    //             // Add department if not exists
+    //             if (!departmentValue.includes(departmentName)) {
+    //                 departmentValue.push(departmentName); // Push only the name
+    //             }
+    //         }
+    //
+    //         // Update level 1 condition
+    //         updatedConditions[index].identityValue = departmentValue;
+    //     }
+    //     // If innerIndex is defined, handle it as a level 2 selection
+    //     else {
+    //         if (!updatedConditions[index].rows || !updatedConditions[index].rows[innerIndex]) {
+    //             console.error(`No row found at inner index ${innerIndex} for condition ${index}`);
+    //             return;
+    //         }
+    //
+    //         let departmentValue = updatedConditions[index].rows[innerIndex].identityValue || [];
+    //         if (isRemove) {
+    //             // Remove the department if exists and the remove action is triggered
+    //             departmentValue = departmentValue.filter(d => d !== departmentName); // Filter by department name
+    //         } else {
+    //             // Add department if not exists
+    //             if (!departmentValue.includes(departmentName)) {
+    //                 departmentValue.push(departmentName); // Push only the name
+    //             }
+    //         }
+    //
+    //         // Update the nested condition
+    //         updatedConditions[index].rows[innerIndex].identityValue = departmentValue;
+    //     }
+    //
+    //     // Set updated conditions
+    //     setConditions(updatedConditions);
+    // };
+
     const handleDepartmentSuggestionClick = (department, index, innerIndex, isRemove = false) => {
         const updatedConditions = [...conditions];
 
-        console.log('Index:', index);
-        console.log('Inner Index:', innerIndex); // This will show undefined for level 1 selections
-
-        // If no innerIndex, handle it as a level 1 selection
         if (innerIndex === undefined) {
+            // Handle level 1 selection
             let departmentValue = updatedConditions[index].identityValue || [];
 
-            const existsIndex = departmentValue.findIndex(d => d.id === department.id);
-            if (existsIndex !== -1) {
-                if (isRemove) {
-                    // Remove the department if exists and the remove action is triggered
-                    departmentValue = departmentValue.filter(d => d.id !== department.id);
-                } else {
-                    // Override the department if it already exists
-                    departmentValue[existsIndex] = department;
-                }
+            if (isRemove) {
+                // Remove from selectedDepartments based on Dept_Id and Dept_Name
+                departmentValue = departmentValue.filter(d => !(d.Dept_Id === department.Dept_Id && d.Dept_Name === department.Dept_Name));
             } else {
-                // Add department if not exists
-                departmentValue.push(department);
+                // Add from departmentList using id and name
+                if (!departmentValue.some(d => d.Dept_Id === department.id && d.Dept_Name === department.name)) {
+                    departmentValue.push({ Dept_Id: department.id, Dept_Name: department.name });
+                }
             }
 
-            // Update level 1 condition
             updatedConditions[index].identityValue = departmentValue;
-        }
-        // If innerIndex is defined, handle it as a level 2 selection
-        else {
+        } else {
+            // Handle level 2 selection
             if (!updatedConditions[index].rows || !updatedConditions[index].rows[innerIndex]) {
                 console.error(`No row found at inner index ${innerIndex} for condition ${index}`);
                 return;
             }
 
             let departmentValue = updatedConditions[index].rows[innerIndex].identityValue || [];
-            const existsIndex = departmentValue.findIndex(d => d.id === department.id);
-            if (existsIndex !== -1) {
-                if (isRemove) {
-                    // Remove the department if exists and the remove action is triggered
-                    departmentValue = departmentValue.filter(d => d.id !== department.id);
-                } else {
-                    // Override the department if it already exists
-                    departmentValue[existsIndex] = department;
-                }
+
+            if (isRemove) {
+                // Remove from selectedDepartments based on Dept_Id and Dept_Name
+                departmentValue = departmentValue.filter(d => !(d.Dept_Id === department.Dept_Id && d.Dept_Name === department.Dept_Name));
             } else {
-                // Add department if not exists
-                departmentValue.push(department);
+                // Add from departmentList using id and name
+                if (!departmentValue.some(d => d.Dept_Id === department.id && d.Dept_Name === department.name)) {
+                    departmentValue.push({ Dept_Id: department.id, Dept_Name: department.name });
+                }
             }
 
-            // Update the nested condition
             updatedConditions[index].rows[innerIndex].identityValue = departmentValue;
         }
 
-        // Set updated conditions
+        // Update the state
         setConditions(updatedConditions);
     };
 
@@ -393,7 +427,7 @@ const RuleConditionRows = ({ onData }) => {
                             <option value="department">department</option>
                         </select>
                         {condition.identityAttribute === 'department' ? (
-                            <DepartmentSearch
+                            <MultiDepartmentSearch
                                 handleDepartmentSuggestionClick={(department) => handleDepartmentSuggestionClick(department, outerIndex, innerIndex)}
                                 selectedDepartments={condition.identityValue || []}
                                 onRemoveDepartment={(department) => handleDepartmentSuggestionClick(department, outerIndex, innerIndex, true)} // Pass the flag for removal

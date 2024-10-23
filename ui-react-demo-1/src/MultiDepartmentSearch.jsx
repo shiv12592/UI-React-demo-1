@@ -1,10 +1,11 @@
+
 import React, { useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { debounce } from "lodash";
 import { searchDepartments } from "./action";
 import { getSearchedDepartments } from "./selectors";
 
-const DepartmentSearch = ({ handleDepartmentSuggestionClick, selectedDepartments, onRemoveDepartment }) => {
+const MultiDepartmentSearch = ({ handleDepartmentSuggestionClick, selectedDepartments, onRemoveDepartment }) => {
     const dispatch = useDispatch();
     const departmentList = useSelector(getSearchedDepartments);
     const [inputDepartmentText, setInputDepartmentText] = useState("");
@@ -33,8 +34,8 @@ const DepartmentSearch = ({ handleDepartmentSuggestionClick, selectedDepartments
     };
 
     const handleDepartmentClick = (department) => {
-        // Call the parent's function to handle department suggestion click with the department name
-        handleDepartmentSuggestionClick(department.name); // Pass only the department name
+        // Call the parent's function to handle department suggestion click
+        handleDepartmentSuggestionClick(department); // Pass the full department object
 
         // Clear the input and hide the suggestions
         setInputDepartmentText(""); // Clear the input field
@@ -64,7 +65,7 @@ const DepartmentSearch = ({ handleDepartmentSuggestionClick, selectedDepartments
                                 onClick={() => handleDepartmentClick(department)} // Update the click handler
                                 style={{ cursor: "pointer", padding: "5px", borderBottom: "1px solid #ccc" }} // Optional styles
                             >
-                                {department.name}
+                                {department.name} (ID: {department.id}) {/* Show name and ID in suggestions */}
                             </div>
                         ))
                     ) : (
@@ -77,12 +78,31 @@ const DepartmentSearch = ({ handleDepartmentSuggestionClick, selectedDepartments
             {/* Display selected departments */}
             {selectedDepartments.length > 0 && (
                 <div className="selected-departments" style={{ display: "flex", flexWrap: "wrap", marginTop: "5px" }}>
-                    {selectedDepartments.map((departmentName, index) => (
-                        <div key={index} style={{ display: "flex", alignItems: "center", padding: "5px", border: "1px solid #ccc", borderRadius: "5px", marginRight: "5px", marginBottom: "5px" }}>
-                            <span style={{ marginRight: "10px" }}>{departmentName}</span>
+                    {selectedDepartments.map((department, index) => (
+                        <div
+                            key={index}
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                padding: "5px",
+                                border: "1px solid #ccc",
+                                borderRadius: "5px",
+                                marginRight: "5px",
+                                marginBottom: "5px",
+                            }}
+                        >
+                            <span style={{ marginRight: "10px" }}>
+                                {department.Dept_Name} (ID: {department.Dept_Id}) {/* Show Dept_Name and Dept_Id */}
+                            </span>
                             <button
-                                onClick={() => handleRemoveDepartment(departmentName)}
-                                style={{ backgroundColor: "red", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}
+                                onClick={() => handleRemoveDepartment(department)}
+                                style={{
+                                    backgroundColor: "red",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "5px",
+                                    cursor: "pointer",
+                                }}
                             >
                                 X
                             </button>
@@ -93,5 +113,4 @@ const DepartmentSearch = ({ handleDepartmentSuggestionClick, selectedDepartments
         </div>
     );
 };
-
-export default DepartmentSearch;
+export default MultiDepartmentSearch;

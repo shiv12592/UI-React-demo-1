@@ -5,12 +5,12 @@ const PORT = 5005;
 
 // Example departments data
 const departments = [
-    { id: 1, name: 'HR' },
-    { id: 2, name: 'Engineering' },
-    { id: 3, name: 'Marketing' },
-    { id: 4, name: 'HR-manager' },
-    { id: 5, name: 'Engineering-manager' },
-    { id: 6, name: 'Marketing-manager' },
+    { id: 1, name: 'HR', value: 'hr related' },
+    { id: 2, name: 'Engineering', value: 'hr related' },
+    { id: 3, name: 'Marketing' , value: 'marketing related'},
+    { id: 4, name: 'HR-manager', value: 'hr- manager related' },
+    { id: 5, name: 'Engineering-manager', value: 'eng-mamanager related' },
+    { id: 6, name: 'Marketing-manager' , value: 'mr-mananger related'},
 ];
 
 // Example ruleDetails data
