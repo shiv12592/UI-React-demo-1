@@ -1,149 +1,104 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import { Col, Row } from "react-bootstrap";
-import ValueSearch from "./ValueSearch";
 
 const ActionOnCondition = ({ action, onChange, ruleType }) => {
-    const handleInputChange = (conditionKey, index, key, value) => {
-        const regex = /^[0-9]+(\.[0-9]{0,2})?$/;
-        if (regex.test(value) || value === "") {
-            const updatedRows = [...action.conditionMet[conditionKey]];
-            updatedRows[index] = { ...updatedRows[index], [key]: value };
-            onChange({
-                ...action,
-                conditionMet: {
-                    ...action.conditionMet,
-                    [conditionKey]: updatedRows,
-                },
-            });
-        }
+    // Handle input change for Allow/Deny action, updating the nested "message" field
+    const handleInputChange = (key, value) => {
+        const updatedAction = { [key]: { message: value } };
+        onChange(updatedAction); // Update the object for Allow/Deny
     };
 
-    const handleOperationChange = (conditionKey, index, value) => {
-        const updatedRows = [...action.conditionMet[conditionKey]];
-        updatedRows[index] = { ...updatedRows[index], operation: value };
-        onChange({
-            ...action,
-            conditionMet: {
-                ...action.conditionMet,
-                [conditionKey]: updatedRows,
-            },
-        });
+    // Handle input change for Auto Provision/Auto Revoke actions, updating rows in an array
+    const handleArrayInputChange = (index, key, value) => {
+        const updatedRows = [...action];
+        updatedRows[index] = { ...updatedRows[index], [key]: value };
+        onChange(updatedRows); // Update the array for Auto Provision/Auto Revoke
     };
 
-    const handleRemoveRow = (conditionKey, index) => {
-        const updatedRows = action.conditionMet[conditionKey].filter(
-            (_, i) => i !== index
-        );
-        onChange({
-            ...action,
-            conditionMet: {
-                ...action.conditionMet,
-                [conditionKey]: updatedRows,
-            },
-        });
+    // Remove a row for Auto Provision/Auto Revoke actions
+    const handleRemoveRow = (index) => {
+        const updatedRows = action.filter((_, i) => i !== index);
+        onChange(updatedRows); // Remove row from the array
     };
 
-    const handleMessageChange = (conditionKey, value) => {
-        onChange({
-            ...action,
-            [conditionKey]: {
-                ...action[conditionKey],
-                message: value,
-            },
-        });
-    };
+    // Render Allow fields (Condition Not Met)
+    const renderAllowFields = () => (
+        <Row style={{ marginBottom: "10px" }}>
+            <Col md={5}>
+                <label>Condition Not Met Message</label>
+                <input
+                    type="text"
+                    className="form-control"
+                    value={action.conditionNotMet?.message || ""}
+                    onChange={(e) => handleInputChange("conditionNotMet", e.target.value)}
+                />
+            </Col>
+        </Row>
+    );
 
-    const handleValueSuggestionClick = (entlm, conditionKey, index) => {
-        const updatedRows = [...action.conditionMet[conditionKey]];
-        const entlmValues = updatedRows[index].value || [];
-        const existsIndex = entlmValues.findIndex(
-            (item) =>
-                item.location === entlm.authNamespace && item.value === entlm.entlmDn
-        );
+    // Render Deny fields (Condition Met)
+    const renderDenyFields = () => (
+        <Row style={{ marginBottom: "10px" }}>
+            <Col md={5}>
+                <label>Condition Met Message</label>
+                <input
+                    type="text"
+                    className="form-control"
+                    value={action.conditionMet?.message || ""}
+                    onChange={(e) => handleInputChange("conditionMet", e.target.value)}
+                />
+            </Col>
+        </Row>
+    );
 
-        if (existsIndex !== -1) {
-            entlmValues.splice(existsIndex, 1);
-        } else {
-            entlmValues.push({
-                location: entlm.authNamespace,
-                value: entlm.entlmDn,
-                name: entlm.entlmName,
-            });
-        }
-
-        updatedRows[index] = { ...updatedRows[index], value: entlmValues };
-
-        // Extract distinct locations and store them in application
-        const distinctLocations = [...new Set(entlmValues.map((item) => item.location))];
-        updatedRows[index].application = distinctLocations;
-        onChange({
-            ...action,
-            conditionMet: {
-                ...action.conditionMet,
-                [conditionKey]: updatedRows,
-            },
-        });
-    };
-
-    const autoResizeTextarea = (element) => {
-        if (element) {
-            element.style.height = "auto";
-            element.style.height = `${element.scrollHeight}px`;
-        }
-    };
-
-    const renderAutoFields = (conditionKey) =>
-        action.conditionMet[conditionKey]?.map((row, index) => (
-            <Row key={index} className="mb-3" style={{ display: "flex", alignItems: "center" }}>
-                <Col md={3} xs={12} style={{ marginBottom: "10px" }}>
-                    <h5>Value Search :</h5>
-                    <ValueSearch
-                        handleValueSuggestionClick={(entlm) =>
-                            handleValueSuggestionClick(entlm, conditionKey, index)
-                        }
-                        selectedEntlmArray={row.value || []}
-                    />
-                </Col>
-
-                <Col md={3} xs={12} style={{ marginBottom: "10px" }}>
-                    <h5>Application:</h5>
-                    <textarea
-                        className="form-control"
-                        value={Array.isArray(row.application) ? row.application.join("\n") : ""}
-                        readOnly
-                        style={{ resize: "vertical", width: "100%" }}
-                    />
-                </Col>
-
-                <Col md={2} xs={12} style={{ marginBottom: "10px" }}>
-                    <h5>Operation:</h5>
-                    <select
-                        value={row.operation || "ADD"}
-                        onChange={(e) => handleOperationChange(conditionKey, index, e.target.value)}
-                        className="form-control"
-                    >
-                        <option value="ADD">ADD</option>
-                        <option value="REMOVE">REMOVE</option>
-                    </select>
-                </Col>
-
-                <Col md={2} xs={12} style={{ marginBottom: "10px" }}>
-                    <h5>Duration:</h5>
+    // Render Auto Provision/Auto Revoke fields
+    const renderAutoFields = () =>
+        action.map((row, index) => (
+            <Row key={index} style={{ marginBottom: "10px" }}>
+                <Col md={2}>
                     <input
                         type="text"
+                        placeholder="Application"
+                        className="form-control"
+                        value={row.application || ""}
+                        onChange={(e) =>
+                            handleArrayInputChange(index, "application", e.target.value)
+                        }
+                    />
+                </Col>
+                <Col md={2}>
+                    <label>Days</label>
+                </Col>
+                <Col md={2}>
+                    <select
                         className="form-control"
                         value={row.duration || ""}
                         onChange={(e) =>
-                            handleInputChange(conditionKey, index, "duration", e.target.value)
+                            handleArrayInputChange(index, "duration", e.target.value)
                         }
+                    >
+                        <option value="">Select</option>
+                        {Array.from({ length: 180 }, (_, i) => i + 1).map((day) => (
+                            <option key={day} value={day}>
+                                {day}
+                            </option>
+                        ))}
+                    </select>
+                </Col>
+                <Col md={2}>
+                    <input
+                        type="text"
+                        placeholder="Value"
+                        className="form-control"
+                        value={row.value || ""}
+                        onChange={(e) => handleArrayInputChange(index, "value", e.target.value)}
                     />
                 </Col>
-
-                <Col md={2} xs={12} style={{ marginBottom: "10px" }}>
+                <Col md={1}>
                     <button
                         type="button"
-                        onClick={() => handleRemoveRow(conditionKey, index)}
+                        onClick={() => handleRemoveRow(index)}
                         className="btn btn-danger"
                     >
                         Remove
@@ -153,69 +108,20 @@ const ActionOnCondition = ({ action, onChange, ruleType }) => {
         ));
 
     return (
-        <div className="row" style={{ width: "100%" }}>
+        <div className="row">
             <Col md={12}>
-                {ruleType === "Allow" && (
-                    <Row
-                        key="conditionNotMet"
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            marginBottom: "10px",
-                        }}
-                    >
-                        <Col md={2} xs={12} style={{ marginBottom: "10px" }}>
-                            Return Message
-                        </Col>
-                        <Col md={10} xs={12}>
-                            <textarea
-                                placeholder="Return Message"
-                                className="form-control"
-                                value={action.conditionNotMet?.message || ""}
-                                onChange={(e) => handleMessageChange("conditionNotMet", e.target.value)}
-                                style={{ resize: "none", width: "100%" }}
-                                rows={1}
-                                onInput={(e) => autoResizeTextarea(e.target)}
-                            />
-                        </Col>
-                    </Row>
-                )}
-
-                {ruleType === "Deny" && (
-                    <Row
-                        key="conditionMet"
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            marginBottom: "10px",
-                        }}
-                    >
-                        <Col md={2} xs={12} style={{ marginBottom: "10px" }}>
-                            Condition Met
-                        </Col>
-                        <Col md={10} xs={12}>
-                            <textarea
-                                placeholder="Return Message"
-                                className="form-control"
-                                value={action.conditionMet?.message || ""}
-                                onChange={(e) => handleMessageChange("conditionMet", e.target.value)}
-                                style={{ resize: "none", width: "100%" }}
-                                rows={1}
-                                onInput={(e) => autoResizeTextarea(e.target)}
-                            />
-                        </Col>
-                    </Row>
-                )}
-
-                {ruleType === "Auto Provision" && renderAutoFields("provision")}
-                {ruleType === "Auto Revoke" && renderAutoFields("revoke")}
+                {ruleType === "Allow"
+                    ? renderAllowFields()
+                    : ruleType === "Deny"
+                        ? renderDenyFields()
+                        : (ruleType === "Auto Provision" || ruleType === "Auto Revoke") && renderAutoFields()}
             </Col>
         </div>
     );
 };
 
 ActionOnCondition.propTypes = {
-    action: PropTypes.object.isRequired,
+    action: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
     onChange: PropTypes.func.isRequired,
     ruleType: PropTypes.string.isRequired,
 };

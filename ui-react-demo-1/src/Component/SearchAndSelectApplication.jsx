@@ -1,12 +1,13 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 
-const ValueSearch = ({ handleValueSuggestionClick, selectedEntlmArray = [] }) => {
-    // Default data for search suggestions
+const SearchAndSelectApplication = ({ handleApplicationSuggestionClick, selectedApplications }) => {
+    // Default data for application search suggestions
     const defaultData = [
-        { entlmDN: "Value1", authNamespace: "Namespace1" },
-        { entlmDN: "Value2", authNamespace: "Namespace2" },
-        { entlmDN: "Value3", authNamespace: "Namespace3" },
-        { entlmDN: "Value4", authNamespace: "Namespace4" },
+        { DN: "Value1", authNamespace: "Namespace1", name: "app1" },
+        { DN: "Value2", authNamespace: "Namespace2", name: "app2" },
+        { DN: "Value3", authNamespace: "Namespace3", name: "app3" },
+        { DN: "Value4", authNamespace: "Namespace4", name: "app4" },
     ];
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -19,14 +20,14 @@ const ValueSearch = ({ handleValueSuggestionClick, selectedEntlmArray = [] }) =>
 
         // Filter the default data based on the search term
         const filtered = defaultData.filter((item) =>
-            item.entlmDN.toLowerCase().includes(value.toLowerCase())
+            item.DN.toLowerCase().includes(value.toLowerCase())
         );
         setFilteredData(filtered);
     };
 
     // Handle suggestion click
-    const handleSuggestionClick = (entlm) => {
-        handleValueSuggestionClick(entlm);
+    const handleSuggestionClick = (app) => {
+        handleApplicationSuggestionClick(app);
         setSearchTerm(""); // Clear search input after selection
     };
 
@@ -37,7 +38,7 @@ const ValueSearch = ({ handleValueSuggestionClick, selectedEntlmArray = [] }) =>
                 type="text"
                 value={searchTerm}
                 onChange={handleSearchChange}
-                placeholder="Search for a value..."
+                placeholder="Search for an application..."
                 className="form-control"
             />
 
@@ -48,7 +49,7 @@ const ValueSearch = ({ handleValueSuggestionClick, selectedEntlmArray = [] }) =>
                         listStyleType: "none",
                         padding: "0",
                         margin: "0",
-                        maxHeight: "100px", // Reduce max height for the suggestion list
+                        maxHeight: "150px",
                         overflowY: "auto",
                         position: "absolute",
                         width: "100%",
@@ -57,42 +58,43 @@ const ValueSearch = ({ handleValueSuggestionClick, selectedEntlmArray = [] }) =>
                         zIndex: 1000,
                     }}
                 >
-                    {filteredData.map((entlm, index) => (
+                    {filteredData.map((app, index) => (
                         <div
                             key={index}
-                            onClick={() => handleSuggestionClick(entlm)}
+                            onClick={() => handleSuggestionClick({ location: app.authNamespace, value: app.DN, name: app.name })}
                             style={{
-                                padding: "4px", // Smaller padding for list items
+                                padding: "8px",
                                 cursor: "pointer",
                                 borderBottom: "1px solid #ddd",
-                                fontSize: "14px", // Smaller font size for list items
                             }}
                         >
-                            {entlm.entlmDN} ({entlm.authNamespace})
+                            {app.DN} ({app.authNamespace})
                         </div>
                     ))}
-                    {filteredData.length === 0 && (
-                        <div style={{ padding: "8px", color: "#999", fontSize: "14px" }}>
-                            No matching values found.
-                        </div>
-                    )}
                 </div>
             )}
 
-            {/* Display selected values */}
-            {selectedEntlmArray.length > 0 && (
-                <div style={{ marginTop: "10px" }}>
-                    <div>
-                        {selectedEntlmArray.map((entlm, index) => (
-                            <div key={index} style={{ fontSize: "14px" }}>
-                                {entlm.entlmDN} ({entlm.authNamespace})
-                            </div>
-                        ))}
+            {/* Display selected applications */}
+            <div style={{ marginTop: "10px" }}>
+                {selectedApplications.map((app, index) => (
+                    <div key={index} className="selected-value">
+                        {app.value} ({app.location}){" "}
+                        <button
+                            onClick={() => handleApplicationSuggestionClick(app)}
+                            className="btn btn-link"
+                        >
+                            Remove
+                        </button>
                     </div>
-                </div>
-            )}
+                ))}
+            </div>
         </div>
     );
 };
 
-export default ValueSearch;
+SearchAndSelectApplication.propTypes = {
+    handleApplicationSuggestionClick: PropTypes.func.isRequired,
+    selectedApplications: PropTypes.array.isRequired,
+};
+
+export default SearchAndSelectApplication;
