@@ -96,7 +96,7 @@ export default function App() {
                     <pre>{jsonData}</pre>
                 </div>
             )}
-            <ActionPart/>
+            <ActionPart/>        
             <div>
                 <h1>Checkbox Attestation Example</h1>
                 <Attestation />

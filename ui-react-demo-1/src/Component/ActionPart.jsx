@@ -1,148 +1,196 @@
-import React, { useState } from "react";
+import React, { Component } from "react";
 import { Col, Row } from "react-bootstrap";
 import ActionOnCondition from "./ ActionOnCondition";
 
-export default function ActionPart() {
-    const [ruleType, setRuleType] = useState("");
-    const [action, setAction] = useState([]); // Initialize as an array for actions
-    const [allowDenyAction, setAllowDenyAction] = useState({
-        conditionMet: "",
-    }); // State for Allow/Deny actions
-    const [errors, setErrors] = useState([]);
-
-    const handleRuleTypeChange = (e) => {
-        const selectedRuleType = e.target.value;
-        setRuleType(selectedRuleType);
-
-        // Reset action or allowDenyAction based on selected ruleType
-        if (selectedRuleType === "Allow" || selectedRuleType === "Deny") {
-            setAllowDenyAction({ conditionMet: ""}); // Clear for Allow/Deny
-            setAction([]); // Reset action array for other rule types
-        } else {
-            setAction([]); // Clear action for Auto Provision/Auto Revoke
-        }
+class ActionPart extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      ruleType: "Auto Provision", // Set to Auto Provision to test the provision rows
+      action: {
+        conditionMet: {
+          provision: [
+            {
+              application: "hgjghk",
+              duration: "6",
+              value: "jghjhghjh",
+            },
+            {
+              application: "",
+              duration: "",
+              value: "fgjghk",
+            },
+          ],
+        },
+      },
+      errors: [],
     };
+  }
 
-    const handleActionChange = (newAction) => {
-        if (ruleType === "Allow" || ruleType === "Deny") {
-            setAllowDenyAction(newAction); // Update the object for Allow/Deny
-        } else {
-            setAction(newAction); // Update the array for Auto Provision/Auto Revoke
-        }
-    };
-
-    const addRow = () => {
-        const newRow = {
-            application: "",
-            duration: "",
-            value: ""
-        };
-        setAction((prevState) => [...prevState, newRow]); // Add a new row to the array
-    };
-
-    const validateAction = () => {
-        let validationErrors = [];
-
-        if (ruleType === "Allow" || ruleType === "Deny") {
-            if (!allowDenyAction.conditionMet) {
-                validationErrors.push("Condition Met cannot be empty.");
-            }
-        } else if (ruleType === "Auto Provision" || ruleType === "Auto Revoke") {
-            if (!action.length) {
-                validationErrors.push(`At least one action is required for '${ruleType}'.`);
-            }
-            action.forEach((item, index) => {
-                if (!item.application) {
-                    validationErrors.push(`Action Row ${index + 1}, application field cannot be empty.`);
+  handleRuleTypeChange = (e) => {
+    const selectedRuleType = e.target.value;
+    this.setState({
+      ruleType: selectedRuleType,
+      action:
+      selectedRuleType === "Allow"
+            ? { conditionNotMet: { message: "" } }
+            : selectedRuleType === "Deny"
+            ? { conditionMet: { message: "" } }
+            : selectedRuleType === "Approval"
+            ? {
+                approval: {
+                    primary: "true",
+                    secondary: "false",
+                },
                 }
-                if (!item.duration) {
-                    validationErrors.push(`Action Row ${index + 1}, duration field cannot be empty.`);
-                }
-                if (!item.value) {
-                    validationErrors.push(`Action Row ${index + 1}, value field cannot be empty.`);
-                }
-            });
-        }
+            : {
+                conditionMet: {
+                    provision: [],
+                },
+                },
+    });
+  };
 
-        setErrors(validationErrors);
-        return validationErrors.length === 0;
-    };
+  handleActionChange = (newAction) => {
+    this.setState({ action: newAction });
+  };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (validateAction()) {
-            if (ruleType === "Allow" || ruleType === "Deny") {
-                console.log(JSON.stringify(allowDenyAction)); // Output for Allow/Deny
-            } else {
-                console.log(JSON.stringify(action)); // Output for Auto Provision/Auto Revoke
-            }
-        }
+  addRow = () => {
+    const newRow = {
+      application: "",
+      duration: "",
+      value: "",
     };
+    this.setState((prevState) => ({
+      action: {
+        ...prevState.action,
+        conditionMet: {
+          ...prevState.action.conditionMet,
+          provision: [...prevState.action.conditionMet.provision, newRow],
+        },
+      },
+    }));
+  };
+
+  validateAction = () => {
+    const { ruleType, action } = this.state;
+    let validationErrors = [];
+
+    if (ruleType === "Allow") {
+      if (!action.conditionNotMet?.message) {
+        validationErrors.push("Message field for 'Allow' is required.");
+      }
+    } else if (ruleType === "Deny") {
+      if (!action.conditionMet?.message) {
+        validationErrors.push("Message field for 'Deny' is required.");
+      }
+    } else if (ruleType === "Approval") {
+        if (!action.approval?.primary || !action.approval?.secondary) {
+        validationErrors.push("Both 'Primary' and 'Secondary' values are required for Approval.");
+        } 
+    }else if (ruleType === "Auto Provision" || ruleType === "Auto Revoke") {
+      if (!action.conditionMet.provision.length) {
+        validationErrors.push(
+          `At least one action is required for '${ruleType}'.`
+        );
+      }
+      action.conditionMet.provision.forEach((item, index) => {
+        if (!item.application) {
+          validationErrors.push(
+            `Action Row ${index + 1}, application field cannot be empty.`
+          );
+        }
+        if (!item.duration) {
+          validationErrors.push(
+            `Action Row ${index + 1}, duration field cannot be empty.`
+          );
+        }
+        if (!item.value) {
+          validationErrors.push(
+            `Action Row ${index + 1}, value field cannot be empty.`
+          );
+        }
+      });
+    }
+
+    this.setState({ errors: validationErrors });
+    return validationErrors.length === 0;
+  };
+
+  handleSubmit = (e) => {
+    e.preventDefault();
+    if (this.validateAction()) {
+      console.log(JSON.stringify(this.state.action));
+    }
+  };
+
+  render() {
+    const { ruleType, action, errors } = this.state;
 
     return (
-        <div className="container">
-            <form onSubmit={handleSubmit}>
+      <div className="container">
+        <form onSubmit={this.handleSubmit}>
+          <Col md={12}>
+            <Row>
+              <Col md={6}>
+                <label>Select Rule Type</label>
+              </Col>
+              <Col md={6}>
+                <select value={ruleType} onChange={this.handleRuleTypeChange}>
+                  <option value="">Select</option>
+                  <option value="Allow">Allow</option>
+                  <option value="Deny">Deny</option>
+                  <option value="Auto Provision">Auto Provision</option>
+                  <option value="Auto Revoke">Auto Revoke</option>
+                  <option value="Approval">Approval</option>
+                </select>
+              </Col>
+            </Row>
+            <Row>
+              <ActionOnCondition
+                action={action}
+                onChange={this.handleActionChange}
+                ruleType={ruleType}
+              />
+            </Row>
+            {(ruleType === "Auto Provision" || ruleType === "Auto Revoke") && (
+              <Row>
                 <Col md={12}>
-                    <Row>
-                        <Col md={6}>
-                            <label>Select Rule Type</label>
-                        </Col>
-                        <Col md={6}>
-                            <select value={ruleType} onChange={handleRuleTypeChange}>
-                                <option value="">Select</option>
-                                <option value="Allow">Allow</option>
-                                <option value="Deny">Deny</option>
-                                <option value="Auto Provision">Auto Provision</option>
-                                <option value="Auto Revoke">Auto Revoke</option>
-                            </select>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <ActionOnCondition
-                            action={ruleType === "Allow" || ruleType === "Deny" ? allowDenyAction : action}
-                            onChange={handleActionChange}
-                            ruleType={ruleType}
-                        />
-                    </Row>
-                    {(ruleType === "Auto Provision" || ruleType === "Auto Revoke") && (
-                        <Row>
-                            <Col md={12}>
-                                <button type="button" onClick={addRow}>
-                                    Add Another Row
-                                </button>
-                            </Col>
-                        </Row>
-                    )}
-                    <Row>
-                        <Col md={12}>
-                            <button type="submit">Submit</button>
-                        </Col>
-                    </Row>
-                    {errors.length > 0 && (
-                        <Row>
-                            <Col md={12}>
-                                <div className="text-danger">
-                                    <ul>
-                                        {errors.map((error, index) => (
-                                            <li key={index} style={{ color: 'red' }}>{error}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </Col>
-                        </Row>
-                    )}
-                    <Row>
-                        <div>
-                            <h3>JSON Output:</h3>
-                            <pre>
-                                {ruleType === "Allow" || ruleType === "Deny"
-                                    ? JSON.stringify(allowDenyAction, null, 2)
-                                    : JSON.stringify(action, null, 2)}
-                            </pre>
-                        </div>
-                    </Row>
+                  <button type="button" onClick={this.addRow}>
+                    Add Another Row
+                  </button>
                 </Col>
-            </form>
-        </div>
+              </Row>
+            )}
+            <Row>
+              <Col md={12}>
+                <button type="submit">Submit</button>
+              </Col>
+            </Row>
+            {errors.length > 0 && (
+              <Row>
+                <Col md={12}>
+                  <div className="text-danger">
+                    <ul>
+                      {errors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </Col>
+              </Row>
+            )}
+            <Row>
+              <div>
+                <h3>JSON Output:</h3>
+                <pre>{JSON.stringify(action, null, 2)}</pre>
+              </div>
+            </Row>
+          </Col>
+        </form>
+      </div>
     );
+  }
 }
+
+export default ActionPart;
