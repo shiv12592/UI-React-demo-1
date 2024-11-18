@@ -3,6 +3,7 @@ import RuleConditionRows from "./RuleConditionRows";
 import { useState, useEffect, useCallback } from "react";
 import { DatePicker } from './Component/DatePicker';
 import ActionPart from "./Component/ActionPart";  // Import DatePicker component
+import Attestation from './Component/Attestation';
 
 export default function App() {
     const [jsonData, setJsonData] = useState(null);
@@ -96,6 +97,10 @@ export default function App() {
                 </div>
             )}
             <ActionPart/>
+            <div>
+                <h1>Checkbox Attestation Example</h1>
+                <Attestation />
+            </div>
         </div>
     );
 }
